@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Notes Manager</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background-color: #f9f9f9; }
+        .box { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; }
+        .save-btn { background: #28a745; color: white; width: 100%; }
+        .note-card { background: #fff; border-left: 5px solid #28a745; padding: 15px; margin-top: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .actions { margin-top: 10px; }
+        .edit-btn { background: #ffc107; margin-right: 5px; }
+        .delete-btn { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Student Notes Manager</h2>
+    <input type="hidden" id="noteId">
+    <input type="text" id="title" placeholder="Title">
+    <input type="text" id="subject" placeholder="Subject">
+    <textarea id="description" placeholder="Description"></textarea>
+    <button class="save-btn" onclick="saveNote()">Save Note</button>
+
+    <hr style="margin-top:20px;">
+    <h3>All Notes</h3>
+    <div id="notesList"></div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000/notes';
+
+    async function fetchNotes() {
+        const res = await fetch(API);
+        const data = await res.json();
+        const list = document.getElementById('notesList');
+        list.innerHTML = '';
+        data.forEach(note => {
+            list.innerHTML += `
+                <div class="note-card">
+                    <strong>${note.title}</strong> (${note.subject})<br>
+                    <p>${note.description}</p>
+                    <small>Date: ${note.created_date}</small>
+                    <div class="actions">
+                        <button class="edit-btn" onclick="edit('${note._id}','${note.title}','${note.subject}','${note.description}')">Edit</button>
+                        <button class="delete-btn" onclick="remove('${note._id}')">Delete</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    async function saveNote() {
+        const id = document.getElementById('noteId').value;
+        const body = {
+            title: document.getElementById('title').value,
+            subject: document.getElementById('subject').value,
+            description: document.getElementById('description').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${API}/${id}` : API;
+
+        await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        clear();
+        fetchNotes();
+    }
+
+    async function remove(id) {
+        await fetch(`${API}/${id}`, { method: 'DELETE' });
+        fetchNotes();
+    }
+
+    function edit(id, t, s, d) {
+        document.getElementById('noteId').value = id;
+        document.getElementById('title').value = t;
+        document.getElementById('subject').value = s;
+        document.getElementById('description').value = d;
+    }
+
+    function clear() {
+        document.getElementById('noteId').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('subject').value = '';
+        document.getElementById('description').value = '';
+    }
+
+    fetchNotes();
+</script>
+</body>
+</html>

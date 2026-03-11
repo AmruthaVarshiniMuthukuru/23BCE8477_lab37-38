@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Online Book Finder</title>
+    <style>
+        body { font-family: Arial; margin: 30px; }
+        .controls { margin-bottom: 20px; }
+        .book-item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; width: 400px; }
+        input, select, button { padding: 8px; margin: 2px; }
+    </style>
+</head>
+<body>
+    <h2>Online Book Finder</h2>
+
+    <div class="controls">
+        <input type="text" id="searchTitle" placeholder="Search by title...">
+        <button onclick="search()">Search</button>
+        
+        <select id="cat" onchange="filter()">
+            <option value="">Category</option>
+            <option value="Programming">Programming</option>
+            <option value="Database">Database</option>
+            <option value="Fiction">Fiction</option>
+        </select>
+
+        <button onclick="sort('price')">Sort by Price</button>
+        <button onclick="sort('rating')">Sort by Rating</button>
+        <button onclick="topRated()">Top Rated</button>
+    </div>
+
+    <div id="results"></div>
+    <button onclick="loadMore()">Load More</button>
+
+    <script>
+        let page = 1;
+
+        async function render(url, append = false) {
+            const res = await fetch(url);
+            const books = await res.json();
+            const div = document.getElementById('results');
+            if (!append) div.innerHTML = '';
+            books.forEach(b => {
+                div.innerHTML += `
+                    <div class="book-item">
+                        <strong>${b.title}</strong><br>
+                        Author: ${b.author} | Category: ${b.category}<br>
+                        Price: $${b.price} | Rating: ${b.rating}
+                    </div>`;
+            });
+        }
+
+        function search() { render(`/books/search?title=${document.getElementById('searchTitle').value}`); }
+        function filter() { render(`/books/category/${document.getElementById('cat').value}`); }
+        function sort(f) { render(`/books/sort/${f}`); }
+        function topRated() { render('/books/top'); }
+        function loadMore() { page++; render(`/books?page=${page}`, true); }
+
+        render('/books?page=1');
+    </script>
+</body>
+</html>
